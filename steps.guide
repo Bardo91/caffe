@@ -1,13 +1,74 @@
-/// Prepare and test
-Copy folder
-in root do:
-	make -j8
-	make python
+///--------------------------------------------------------------------------------------------------
+/// Prepare
+///--------------------------------------------------------------------------------------------------
+clone repository (https://github.com/Bardo91/caffe)
+checkout to branch vigus 'git checkout vigus'
+create build folder 'mkdir .build_release'
+create ling build folder 'ln -sf .build_release build'
+go into build folder 'cd build' and compile:
+	make all -j8
 	sudo make install
 
 test it with
 	python examples/ssd/ssd_detect.py
 
+///--------------------------------------------------------------------------------------------------
+/// Test
+///--------------------------------------------------------------------------------------------------
+Download any dataset, for example tool dataset. (URL!!!!)
 
+Open file examples/ssd/ssd_detect.py and check lines:
+	25 labelmap_file = "data/VOC0712_use_tools_2017/labelmap_voc.prototxt"
+	45 model_def = "models/VGGNet/VOC0712_use_tools_2017/SSD_300x300/deploy.prototxt"
+	46 model_weights = "models/VGGNet/VOC0712_use_tools_2017/SSD_300x300/VGG_VOC0712_SSD_300x300_use_tools_2017_iter_8000.caffemodel"
+	63 image = caffe.io.load_image("/home/bardo91/Downloads/Telegram Desktop/photo_2017-05-31_11-49-45.jpg")
+
+Make sure those file paths are pointing to hte files in your computer 25, 45 and 46 are the models and 63 the test image file.
+
+run 'python examples/ssd/ssd_detect.py'
+
+///--------------------------------------------------------------------------------------------------
 /// HOW TO TRAIN
+///--------------------------------------------------------------------------------------------------
+
+Prepare VocDevkit:
+	1. Create a folder in data called "VOCdevkit_XXX"
+	2. Inside of "VOCdevkit_XXX" create a folder for you dataset for example "VOC2017"
+	3. Create 4 folders:
+		a. "Annotations" --> Put in this folder the XMLs with labels of the images. See notes.
+		b. "ImageSets"   --> Create a folder called "Main" inside of this folder and put two files:
+			* "test.txt" --> names of files that will be used for testing the network
+			* "trainval.txt" --> names of files that will be used for training the network
+		c. "JPEGImages"	 --> Put images for training
+	4. Customize your "labelmap_voc.prototxt" file and put it into a folder
+	5. Copy files "create_list.sh" and "create_data.sh" into a the same folder and run them in order.
+	6. Now you have all the necessary files!
+
+Configure file examples/ssd/ssd_pascal_use.py if wanto train with pascal model (VGGNet for example)
+	82 train_data = "data/VOCdevkit_use_tools_2017/VOC2007/lmdb/VOC0712_use_tools_2017_trainval_lmdb"
+	84 test_data = "data/VOCdevkit_use_tools_2017/VOC2007/lmdb/VOC0712_use_tools_2017_test_lmdb"
+	240 save_dir = "models/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
+	242 snapshot_dir = "models/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
+	244 job_dir = "jobs/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
+	246 output_result_dir = "{}/data/VOCdevkit_use_tools_2017/results/VOC2007/{}/Main".format(os.environ['HOME'], job_name)
+
+	259 name_size_file = "data/VOC0712_use_tools_2017/test_name_size.txt"
+	261 pretrain_model = ""
+	263 label_map_file = "data/VOC0712_use_tools_2017/labelmap_voc.prototxt"
+
+	266 num_classes = 2+1 		//num of classes + background
+	268 background_label_id=2
+
+	332 gpus = "0"
+
+	339 batch_size = 8		// If getting low of memory reduce this numbers (2, 4, 8, 16, 32...)
+	340 accum_batch_size = 8
+
+	361 num_test_image = 18
+	362 test_batch_size = 8
+
+	376    'max_iter': 8000,	// training steps
+	377    'snapshot': 2000,	// define when to save an state of the solver in case it fails to use it or recover (each snapshot steps)
+
+
 
