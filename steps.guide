@@ -1,0 +1,13 @@
+/// Prepare and test
+Copy folder
+in root do:
+	make -j8
+	make python
+	sudo make install
+
+test it with
+	python examples/ssd/ssd_detect.py
+
+
+/// HOW TO TRAIN
+
