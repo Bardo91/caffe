@@ -41,8 +41,10 @@ Prepare VocDevkit:
 			* "trainval.txt" --> names of files that will be used for training the network
 		c. "JPEGImages"	 --> Put images for training
 	4. Customize your "labelmap_voc.prototxt" file and put it into a folder
-	5. Copy files "create_list.sh" and "create_data.sh" into a the same folder and run them in order.
-	6. Now you have all the necessary files!
+	5. Add following line to your bash file and source it in the commandline
+		---> export PYTHONPATH=$PYTHONPATH:/home/USER/PATH/caffe_ssd/python
+	6. Copy files "create_list.sh" and "create_data.sh" into a the same folder and run them in order. Check paths in files
+	7. Now you have all the necessary files!
 
 Configure file examples/ssd/ssd_pascal_use.py if wanto train with pascal model (VGGNet for example)
 	82 train_data = "data/VOCdevkit_use_tools_2017/VOC2007/lmdb/VOC0712_use_tools_2017_trainval_lmdb"
@@ -70,5 +72,14 @@ Configure file examples/ssd/ssd_pascal_use.py if wanto train with pascal model (
 	376    'max_iter': 8000,	// training steps
 	377    'snapshot': 2000,	// define when to save an state of the solver in case it fails to use it or recover (each snapshot steps)
 
+
+///--------------------------------------------------------------------------------------------------
+/// DEP
+///--------------------------------------------------------------------------------------------------
+
+sudo apt-get install
+	python-skimage
+	python-protobuf
+	
 
 

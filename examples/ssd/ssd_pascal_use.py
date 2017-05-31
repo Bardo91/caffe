@@ -237,11 +237,11 @@ job_name = "SSD_{}".format(resize)
 model_name = "VGG_VOC0712_{}_use_tools_2017".format(job_name)
 
 # Directory which stores the model .prototxt file.
-save_dir = "models/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
+save_dir = "use/models/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
 # Directory which stores the snapshot of models.
-snapshot_dir = "models/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
+snapshot_dir = "use/models/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
 # Directory which stores the job script and log file.
-job_dir = "jobs/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
+job_dir = "use/jobs/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
 # Directory which stores the detection results.
 output_result_dir = "{}/data/VOCdevkit_use_tools_2017/results/VOC2007/{}/Main".format(os.environ['HOME'], job_name)
 
@@ -329,15 +329,15 @@ clip = False
 
 # Solver parameters.
 # Defining which GPUs to use.
-gpus = "0"
+gpus = "0,1"
 gpulist = gpus.split(",")
 num_gpus = len(gpulist)
 
 # Divide the mini-batch to different GPUs.
 #batch_size = 32
 #accum_batch_size = 32
-batch_size = 8
-accum_batch_size = 8
+batch_size = 16
+accum_batch_size = 16
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
@@ -373,7 +373,7 @@ solver_param = {
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 8000,			# Reduced for testing purposes original 120000
+    'max_iter': 30000,			# Reduced for testing purposes original 120000
     'snapshot': 2000,
     'display': 10,
     'average_loss': 10,
