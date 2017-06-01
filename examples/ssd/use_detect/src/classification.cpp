@@ -29,16 +29,10 @@ int main(int _argc, char** _argv){
     const string& weights_file = _argv[2];
     const string& mean_file = FLAGS_mean_file;
     const string& mean_value = FLAGS_mean_value;
-    const string& file_type = FLAGS_file_type;
-    const string& out_file = FLAGS_out_file;
     const float confidence_threshold = FLAGS_confidence_threshold;
 
     // Initialize the network.
     WrapperSSD detector(model_file, weights_file, mean_file, mean_value);
-
-    std::string file(_argv[3]);
-
-
     cv::VideoCapture cap(0);
 
     if(!cap.isOpened()){
@@ -48,6 +42,7 @@ int main(int _argc, char** _argv){
         //cv::Mat img = cv::imread(file, -1);
         cv::Mat img;
         while(true){
+            cap.grab();
             cap >> img;
             std::vector<vector<float> > detections = detector.Detect(img);
 
