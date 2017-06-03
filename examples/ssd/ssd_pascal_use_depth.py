@@ -79,9 +79,15 @@ resume_training = True
 remove_old_models = False
 
 # The database file for training data. Created by data/VOC0712/create_data.sh
-train_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/wsp/data/VOC2017/lmdb/USE_TOOLS_2017_wsp_trainval_lmdb"
+train_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC2007/lmdb/VOC0712_use_depth_trainval_lmdb	"
 # The database file for testing data. Created by data/VOC0712/create_data.sh
-test_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/wsp/data/VOC2017/lmdb/USE_TOOLS_2017_wsp_test_lmdb"
+test_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC2007/lmdb/VOC0712_use_depth_test_lmdb"
+
+# The database file for training data. Created by data/VOC0712/create_data.sh
+train_data_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC2007/lmdb/VOC0712_use_depth_trainval_depth_lmdb"
+# The database file for testing data. Created by data/VOC0712/create_data.sh
+test_data_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC2007/lmdb/VOC0712_use_depth_test_depth_lmdb	"
+
 # Specify the batch sampler.
 resize_width = 300
 resize_height = 300
@@ -303,7 +309,9 @@ min_dim = 300
 # conv7_2 ==> 5 x 5
 # conv8_2 ==> 3 x 3
 # conv9_2 ==> 1 x 1
-mbox_source_layers = ['conv4_3', 'fc7', 'conv6_2', 'conv7_2', 'conv8_2', 'conv9_2']
+#mbox_source_layers = ['conv4_3', 'fc7', 'conv6_2', 'conv7_2', 'conv8_2', 'conv9_2']
+mbox_source_layers = ['conv4_3', 'fc7', 'conv6_2', 'conv7_2', 'conv8_2', 'conv9_2', "convd4_3", "convd6_2", "convd7_3"]
+
 # in percent %
 min_ratio = 20
 max_ratio = 90
@@ -315,10 +323,13 @@ for ratio in xrange(min_ratio, max_ratio + 1, step):
   max_sizes.append(min_dim * (ratio + step) / 100.)
 min_sizes = [min_dim * 10 / 100.] + min_sizes
 max_sizes = [min_dim * 20 / 100.] + max_sizes
-steps = [8, 16, 32, 64, 100, 300]
-aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
+#steps = [8, 16, 32, 64, 100, 300]
+steps = [8, 16, 32, 64, 100, 300, 8, 32, 64]
+#aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2]]
+aspect_ratios = [[2], [2, 3], [2, 3], [2, 3], [2], [2], [2], [2], [2]]
 # L2 normalize conv4_3.
-normalizations = [20, -1, -1, -1, -1, -1]
+#normalizations = [20, -1, -1, -1, -1, -1]
+normalizations = [20, -1, -1, -1, -1, -1, -1, -1, -1]
 # variance used to encode/decode prior bboxes.
 if code_type == P.PriorBox.CENTER_SIZE:
   prior_variance = [0.1, 0.1, 0.2, 0.2]
@@ -422,11 +433,20 @@ det_eval_param = {
 # Check file.
 check_if_exist(train_data)
 check_if_exist(test_data)
+check_if_exist(train_data_depth)
+check_if_exist(test_data_depth)
 check_if_exist(label_map_file)
 check_if_exist(pretrain_model)
 make_if_not_exist(save_dir)
 make_if_not_exist(job_dir)
 make_if_not_exist(snapshot_dir)
+
+# Create train net depth.
+train_net_file_depth = "{}/train_depth.prototxt".format(save_dir)
+net2 = caffe.NetSpec()
+net2.data, net2.label = CreateAnnotatedDataLayer(train_data_depth, batch_size=batch_size_per_device,
+        train=True, output_label=True, label_map_file=label_map_file,
+        transform_param=train_transform_param, batch_sampler=batch_sampler)
 
 # Create train net.
 net = caffe.NetSpec()
@@ -439,16 +459,41 @@ VGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True,
 
 AddExtraLayers(net, use_batchnorm, lr_mult=lr_mult)
 
-# Add extra input layer for depth
-CreateAnnotatedDataLayer(net);
+#custom depth layers
+net.tops["data2"] = net2.data
 
-# Convolution of depth data
+ConvBNLayer(net, "data2", "convd1_1", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd1_1", "convd1_2", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+net.poold1 = L.Pooling(net.convd1_2, pool=P.Pooling.MAX, kernel_size=2, stride=2)
+ConvBNLayer(net, "poold1", "convd2_1", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd2_1", "convd2_2", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+net.poold2 = L.Pooling(net.convd2_2, pool=P.Pooling.MAX, kernel_size=2, stride=2)
+ConvBNLayer(net, "poold2", "convd3_1", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd3_1", "convd3_2", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+net.poold3 = L.Pooling(net.convd3_2, pool=P.Pooling.MAX, kernel_size=2, stride=2)
+ConvBNLayer(net, "poold3", "convd4_1", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd4_1", "convd4_2", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd4_2", "convd4_3", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+net.poold4 = L.Pooling(net.convd4_3, pool=P.Pooling.MAX, kernel_size=2, stride=2)
+ConvBNLayer(net, "poold4", "convd5_1", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd5_1", "convd5_2", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd5_2", "convd5_3", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+net.poold5 = L.Pooling(net.convd5_3, pool=P.Pooling.MAX, kernel_size=2, stride=2)
+ConvBNLayer(net, "poold5", "convd6_1", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd6_1", "convd6_2", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd6_2", "convd6_3", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+net.poold6 = L.Pooling(net.convd6_3, pool=P.Pooling.MAX, kernel_size=2, stride=2)
+ConvBNLayer(net, "poold6", "convd7_1", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd7_1", "convd7_2", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+ConvBNLayer(net, "convd7_2", "convd7_3", False, True, 256, 1, 0, 1, lr_mult=lr_mult)
+
 
 mbox_layers = CreateMultiBoxHead(net, data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
         aspect_ratios=aspect_ratios, steps=steps, normalizations=normalizations,
         num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
         prior_variance=prior_variance, kernel_size=3, pad=1, lr_mult=lr_mult)
+
 
 # Create the MultiBoxLossLayer.
 name = "mbox_loss"
@@ -462,119 +507,119 @@ with open(train_net_file, 'w') as f:
     print(net.to_proto(), file=f)
 shutil.copy(train_net_file, job_dir)
 
-# Create test net.
-net = caffe.NetSpec()
-net.data, net.label = CreateAnnotatedDataLayer(test_data, batch_size=test_batch_size,
-        train=False, output_label=True, label_map_file=label_map_file,
-        transform_param=test_transform_param)
+# # Create test net.
+# net = caffe.NetSpec()
+# net.data, net.label = CreateAnnotatedDataLayer(test_data, batch_size=test_batch_size,
+#         train=False, output_label=True, label_map_file=label_map_file,
+#         transform_param=test_transform_param)
 
-VGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True,
-    dropout=False)
+# VGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True,
+#     dropout=False)
 
-AddExtraLayers(net, use_batchnorm, lr_mult=lr_mult)
+# AddExtraLayers(net, use_batchnorm, lr_mult=lr_mult)
 
-mbox_layers = CreateMultiBoxHead(net, data_layer='data', from_layers=mbox_source_layers,
-        use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
-        aspect_ratios=aspect_ratios, steps=steps, normalizations=normalizations,
-        num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
-        prior_variance=prior_variance, kernel_size=3, pad=1, lr_mult=lr_mult)
+# mbox_layers = CreateMultiBoxHead(net, data_layer='data', from_layers=mbox_source_layers,
+#         use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
+#         aspect_ratios=aspect_ratios, steps=steps, normalizations=normalizations,
+#         num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
+#         prior_variance=prior_variance, kernel_size=3, pad=1, lr_mult=lr_mult)
 
-conf_name = "mbox_conf"
-if multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.SOFTMAX:
-  reshape_name = "{}_reshape".format(conf_name)
-  net[reshape_name] = L.Reshape(net[conf_name], shape=dict(dim=[0, -1, num_classes]))
-  softmax_name = "{}_softmax".format(conf_name)
-  net[softmax_name] = L.Softmax(net[reshape_name], axis=2)
-  flatten_name = "{}_flatten".format(conf_name)
-  net[flatten_name] = L.Flatten(net[softmax_name], axis=1)
-  mbox_layers[1] = net[flatten_name]
-elif multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.LOGISTIC:
-  sigmoid_name = "{}_sigmoid".format(conf_name)
-  net[sigmoid_name] = L.Sigmoid(net[conf_name])
-  mbox_layers[1] = net[sigmoid_name]
+# conf_name = "mbox_conf"
+# if multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.SOFTMAX:
+#   reshape_name = "{}_reshape".format(conf_name)
+#   net[reshape_name] = L.Reshape(net[conf_name], shape=dict(dim=[0, -1, num_classes]))
+#   softmax_name = "{}_softmax".format(conf_name)
+#   net[softmax_name] = L.Softmax(net[reshape_name], axis=2)
+#   flatten_name = "{}_flatten".format(conf_name)
+#   net[flatten_name] = L.Flatten(net[softmax_name], axis=1)
+#   mbox_layers[1] = net[flatten_name]
+# elif multibox_loss_param["conf_loss_type"] == P.MultiBoxLoss.LOGISTIC:
+#   sigmoid_name = "{}_sigmoid".format(conf_name)
+#   net[sigmoid_name] = L.Sigmoid(net[conf_name])
+#   mbox_layers[1] = net[sigmoid_name]
 
-net.detection_out = L.DetectionOutput(*mbox_layers,
-    detection_output_param=det_out_param,
-    include=dict(phase=caffe_pb2.Phase.Value('TEST')))
-net.detection_eval = L.DetectionEvaluate(net.detection_out, net.label,
-    detection_evaluate_param=det_eval_param,
-    include=dict(phase=caffe_pb2.Phase.Value('TEST')))
+# net.detection_out = L.DetectionOutput(*mbox_layers,
+#     detection_output_param=det_out_param,
+#     include=dict(phase=caffe_pb2.Phase.Value('TEST')))
+# net.detection_eval = L.DetectionEvaluate(net.detection_out, net.label,
+#     detection_evaluate_param=det_eval_param,
+#     include=dict(phase=caffe_pb2.Phase.Value('TEST')))
 
-with open(test_net_file, 'w') as f:
-    print('name: "{}_test"'.format(model_name), file=f)
-    print(net.to_proto(), file=f)
-shutil.copy(test_net_file, job_dir)
+# with open(test_net_file, 'w') as f:
+#     print('name: "{}_test"'.format(model_name), file=f)
+#     print(net.to_proto(), file=f)
+# shutil.copy(test_net_file, job_dir)
 
-# Create deploy net.
-# Remove the first and last layer from test net.
-deploy_net = net
-with open(deploy_net_file, 'w') as f:
-    net_param = deploy_net.to_proto()
-    # Remove the first (AnnotatedData) and last (DetectionEvaluate) layer from test net.
-    del net_param.layer[0]
-    del net_param.layer[-1]
-    net_param.name = '{}_deploy'.format(model_name)
-    net_param.input.extend(['data'])
-    net_param.input_shape.extend([
-        caffe_pb2.BlobShape(dim=[1, 3, resize_height, resize_width])])
-    print(net_param, file=f)
-shutil.copy(deploy_net_file, job_dir)
+# # Create deploy net.
+# # Remove the first and last layer from test net.
+# deploy_net = net
+# with open(deploy_net_file, 'w') as f:
+#     net_param = deploy_net.to_proto()
+#     # Remove the first (AnnotatedData) and last (DetectionEvaluate) layer from test net.
+#     del net_param.layer[0]
+#     del net_param.layer[-1]
+#     net_param.name = '{}_deploy'.format(model_name)
+#     net_param.input.extend(['data'])
+#     net_param.input_shape.extend([
+#         caffe_pb2.BlobShape(dim=[1, 3, resize_height, resize_width])])
+#     print(net_param, file=f)
+# shutil.copy(deploy_net_file, job_dir)
 
-# Create solver.
-solver = caffe_pb2.SolverParameter(
-        train_net=train_net_file,
-        test_net=[test_net_file],
-        snapshot_prefix=snapshot_prefix,
-        **solver_param)
+# # Create solver.
+# solver = caffe_pb2.SolverParameter(
+#         train_net=train_net_file,
+#         test_net=[test_net_file],
+#         snapshot_prefix=snapshot_prefix,
+#         **solver_param)
 
-with open(solver_file, 'w') as f:
-    print(solver, file=f)
-shutil.copy(solver_file, job_dir)
+# with open(solver_file, 'w') as f:
+#     print(solver, file=f)
+# shutil.copy(solver_file, job_dir)
 
-max_iter = 0
-# Find most recent snapshot.
-for file in os.listdir(snapshot_dir):
-  if file.endswith(".solverstate"):
-    basename = os.path.splitext(file)[0]
-    iter = int(basename.split("{}_iter_".format(model_name))[1])
-    if iter > max_iter:
-      max_iter = iter
+# max_iter = 0
+# # Find most recent snapshot.
+# for file in os.listdir(snapshot_dir):
+#   if file.endswith(".solverstate"):
+#     basename = os.path.splitext(file)[0]
+#     iter = int(basename.split("{}_iter_".format(model_name))[1])
+#     if iter > max_iter:
+#       max_iter = iter
 
-train_src_param = '--weights="{}" \\\n'.format(pretrain_model)
-if resume_training:
-  if max_iter > 0:
-    train_src_param = '--snapshot="{}_iter_{}.solverstate" \\\n'.format(snapshot_prefix, max_iter)
+# train_src_param = '--weights="{}" \\\n'.format(pretrain_model)
+# if resume_training:
+#   if max_iter > 0:
+#     train_src_param = '--snapshot="{}_iter_{}.solverstate" \\\n'.format(snapshot_prefix, max_iter)
 
-if remove_old_models:
-  # Remove any snapshots smaller than max_iter.
-  for file in os.listdir(snapshot_dir):
-    if file.endswith(".solverstate"):
-      basename = os.path.splitext(file)[0]
-      iter = int(basename.split("{}_iter_".format(model_name))[1])
-      if max_iter > iter:
-        os.remove("{}/{}".format(snapshot_dir, file))
-    if file.endswith(".caffemodel"):
-      basename = os.path.splitext(file)[0]
-      iter = int(basename.split("{}_iter_".format(model_name))[1])
-      if max_iter > iter:
-        os.remove("{}/{}".format(snapshot_dir, file))
+# if remove_old_models:
+#   # Remove any snapshots smaller than max_iter.
+#   for file in os.listdir(snapshot_dir):
+#     if file.endswith(".solverstate"):
+#       basename = os.path.splitext(file)[0]
+#       iter = int(basename.split("{}_iter_".format(model_name))[1])
+#       if max_iter > iter:
+#         os.remove("{}/{}".format(snapshot_dir, file))
+#     if file.endswith(".caffemodel"):
+#       basename = os.path.splitext(file)[0]
+#       iter = int(basename.split("{}_iter_".format(model_name))[1])
+#       if max_iter > iter:
+#         os.remove("{}/{}".format(snapshot_dir, file))
 
-# Create job file.
-with open(job_file, 'w') as f:
-  f.write('cd {}\n'.format(caffe_root))
-  f.write('./build/tools/caffe train \\\n')
-  f.write('--solver="{}" \\\n'.format(solver_file))
-  f.write(train_src_param)
-  if solver_param['solver_mode'] == P.Solver.GPU:
-    f.write('--gpu {} 2>&1 | tee {}/{}.log\n'.format(gpus, job_dir, model_name))
-  else:
-    f.write('2>&1 | tee {}/{}.log\n'.format(job_dir, model_name))
+# # Create job file.
+# with open(job_file, 'w') as f:
+#   f.write('cd {}\n'.format(caffe_root))
+#   f.write('./build/tools/caffe train \\\n')
+#   f.write('--solver="{}" \\\n'.format(solver_file))
+#   f.write(train_src_param)
+#   if solver_param['solver_mode'] == P.Solver.GPU:
+#     f.write('--gpu {} 2>&1 | tee {}/{}.log\n'.format(gpus, job_dir, model_name))
+#   else:
+#     f.write('2>&1 | tee {}/{}.log\n'.format(job_dir, model_name))
 
-# Copy the python script to job_dir.
-py_file = os.path.abspath(__file__)
-shutil.copy(py_file, job_dir)
+# # Copy the python script to job_dir.
+# py_file = os.path.abspath(__file__)
+# shutil.copy(py_file, job_dir)
 
-# Run the job.
-os.chmod(job_file, stat.S_IRWXU)
-if run_soon:
-  subprocess.call(job_file, shell=True)
+# # Run the job.
+# os.chmod(job_file, stat.S_IRWXU)
+# if run_soon:
+#   subprocess.call(job_file, shell=True)
