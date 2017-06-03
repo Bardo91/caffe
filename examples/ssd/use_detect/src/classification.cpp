@@ -35,6 +35,8 @@ int main(int _argc, char** _argv){
     WrapperSSD detector(model_file, weights_file, mean_file, mean_value);
     cv::VideoCapture cap(0);
 
+    cv::namedWindow("detection", CV_WINDOW_FREERATIO);
+
     if(!cap.isOpened()){
         std::cout << "Error opening camera" << std::endl;
         return -1;
@@ -61,7 +63,7 @@ int main(int _argc, char** _argv){
                     if(x0 > 0 && y0 > 0 && x1 < img.cols && y1 < img.rows){
                         cv::rectangle(img, cv::Rect(x0, y0, x1-x0, y1-y0),cv::Scalar(0,255,0), 3);
                         cv::putText(img, std::to_string(score),cv::Point(x0, y0+10),CV_FONT_HERSHEY_PLAIN,1,cv::Scalar(0,255,0));
-                        std::string label = d[1] == 0? "plier":"wrench";
+                        std::string label = (d[1] == 0? "plier":(d[1]==1?"wrench":"screwDriver"));
                         cv::putText(img, label,cv::Point(x0, y0+20),CV_FONT_HERSHEY_PLAIN,1,cv::Scalar(0,255,0));
                     }
                 }
