@@ -469,7 +469,6 @@ make_if_not_exist(snapshot_dir)
 
 ###############################################################################################################################################
 # Create train net depth.
-train_net_file_depth = "{}/train_depth.prototxt".format(save_dir)
 net2 = caffe.NetSpec()
 net2.data, net2.label = CreateAnnotatedDataLayer(train_data_depth, batch_size=batch_size_per_device,
         train=True, output_label=True, label_map_file=label_map_file,
@@ -511,11 +510,10 @@ shutil.copy(train_net_file, job_dir)
 
 ###############################################################################################################################################
 # Create train net depth.
-test_net_file_depth = "{}/test_depth.prototxt".format(save_dir)
 net2 = caffe.NetSpec()
-net2.data, net2.label = CreateAnnotatedDataLayer(test_net_file_depth, batch_size=batch_size_per_device,
-        train=True, output_label=True, label_map_file=label_map_file,
-        transform_param=train_transform_param, batch_sampler=batch_sampler)
+net2.data, net2.label = CreateAnnotatedDataLayer(test_data_depth, batch_size=test_batch_size,
+        train=False, output_label=True, label_map_file=label_map_file,
+        transform_param=train_transform_param)
 
 # Create test net.
 net = caffe.NetSpec()
@@ -578,12 +576,10 @@ with open(deploy_net_file, 'w') as f:
     net_param = deploy_net.to_proto()
     # Remove all the AnnotatedData layers and last (DetectionEvaluate) layer from test net.
     del net_param.layer[0]
-    print(net_param.layer[-1])
     del net_param.layer[-1]
 
     for i in reversed(range(1,len(net_param.layer))):
         if net_param.layer[i].name == 'data':
-                print(net_param.layer[i])
                 del net_param.layer[i]
 
     #add rgb input layer
