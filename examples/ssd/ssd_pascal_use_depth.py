@@ -48,46 +48,38 @@ def AddExtraLayers(net, use_batchnorm=True, lr_mult=1):
     # TODO(weiliu89): Construct the name using the last layer to avoid duplication.
     # 10 x 10
     out_layer = "conv6_1"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 1, 0, 1,
-        lr_mult=lr_mult)
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 1, 0, 1, lr_mult=lr_mult)
 
     from_layer = out_layer
     out_layer = "conv6_2"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 512, 3, 1, 2,
-        lr_mult=lr_mult)
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 512, 3, 1, 2, lr_mult=lr_mult)
 
     # 5 x 5
     from_layer = out_layer
     out_layer = "conv7_1"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 128, 1, 0, 1,
-      lr_mult=lr_mult)
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 128, 1, 0, 1, lr_mult=lr_mult)
 
     from_layer = out_layer
     out_layer = "conv7_2"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 2,
-      lr_mult=lr_mult)
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 2, lr_mult=lr_mult)
 
     # 3 x 3
     from_layer = out_layer
     out_layer = "conv8_1"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 128, 1, 0, 1,
-      lr_mult=lr_mult)
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 128, 1, 0, 1, lr_mult=lr_mult)
 
     from_layer = out_layer
     out_layer = "conv8_2"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 0, 1,
-      lr_mult=lr_mult)
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 0, 1, lr_mult=lr_mult)
 
     # 1 x 1
     from_layer = out_layer
     out_layer = "conv9_1"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 128, 1, 0, 1,
-      lr_mult=lr_mult)
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 128, 1, 0, 1, lr_mult=lr_mult)
 
     from_layer = out_layer
     out_layer = "conv9_2"
-    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 0, 1,
-      lr_mult=lr_mult)
+    ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 0, 1, lr_mult=lr_mult)
 
     return net
 
@@ -106,13 +98,13 @@ resume_training = True
 remove_old_models = False
 
 # The database file for training data. Created by data/VOC0712/create_data.sh
-train_data =            "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC2007/lmdb/VOC0712_use_depth_trainval_lmdb	"
+train_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_trainval_lmdb"
 # The database file for testing data. Created by data/VOC0712/create_data.sh
-test_data =             "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC2007/lmdb/VOC0712_use_depth_test_lmdb"
+test_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_test_lmdb"
 # The database file for training data. Created by data/VOC0712/create_data.sh
-train_data_depth =      "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC2007/lmdb/VOC0712_use_depth_trainval_depth_lmdb"
+train_data_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_trainval_depth_lmdb"
 # The database file for testing data. Created by data/VOC0712/create_data.sh
-test_data_depth =       "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC2007/lmdb/VOC0712_use_depth_test_depth_lmdb	"
+test_data_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_test_depth_lmdb"
 
 # Specify the batch sampler.
 resize_width = 300
@@ -252,6 +244,54 @@ test_transform_param = {
                 },
         }
 
+train_transform_param_depth = {
+        'mirror': True,
+        'mean_value': [123],
+        'resize_param': {
+                'prob': 1,
+                'resize_mode': P.Resize.WARP,
+                'height': resize_height,
+                'width': resize_width,
+                'interp_mode': [
+                        P.Resize.LINEAR,
+                        P.Resize.AREA,
+                        P.Resize.NEAREST,
+                        P.Resize.CUBIC,
+                        P.Resize.LANCZOS4,
+                        ],
+                },
+        'distort_param': {
+                'brightness_prob': 0.5,
+                'brightness_delta': 32,
+                'contrast_prob': 0.5,
+                'contrast_lower': 0.5,
+                'contrast_upper': 1.5,
+                'hue_prob': 0.5,
+                'hue_delta': 18,
+                'saturation_prob': 0.5,
+                'saturation_lower': 0.5,
+                'saturation_upper': 1.5,
+                'random_order_prob': 0.0,
+                },
+        'expand_param': {
+                'prob': 0.5,
+                'max_expand_ratio': 4.0,
+                },
+        'emit_constraint': {
+            'emit_type': caffe_pb2.EmitConstraint.CENTER,
+            }
+        }
+test_transform_param_depth = {
+        'mean_value': [123],
+        'resize_param': {
+                'prob': 1,
+                'resize_mode': P.Resize.WARP,
+                'height': resize_height,
+                'width': resize_width,
+                'interp_mode': [P.Resize.LINEAR],
+                },
+        }
+
 # If true, use batch norm for all newly added layers.
 # Currently only the non batch norm version has been tested.
 use_batchnorm = False
@@ -271,7 +311,7 @@ model_name = "VGG_USE_DEPTH".format(job_name)
 # Directory which stores the model .prototxt file.
 save_dir = "use_depth/models/VGGNet/VGG_USE_DEPTH/{}".format(job_name)
 # Directory which stores the snapshot of models.
-snapshot_dir = "use_depth/models/VGGNet/VGG_DEPTH/{}".format(job_name)
+snapshot_dir = "use_depth/models/VGGNet/VGG_USE_DEPTH/{}".format(job_name)
 # Directory which stores the job script and log file.
 job_dir = "use_depth/jobs/VGGNet/VOC0712_use_depth/{}".format(job_name)
 # Directory which stores the detection results.
@@ -289,6 +329,7 @@ job_file = "{}/{}.sh".format(job_dir, model_name)
 
 # Stores the test image names and sizes. Created by data/VOC0712_use_tools_2017/create_list.sh
 name_size_file = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/tools/test_name_size.txt"
+name_size_file_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/tools/test_name_size_depth.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
 pretrain_model = ""
 # Stores LabelMapItem.
@@ -472,7 +513,7 @@ make_if_not_exist(snapshot_dir)
 net2 = caffe.NetSpec()
 net2.data, net2.label = CreateAnnotatedDataLayer(train_data_depth, batch_size=batch_size_per_device,
         train=True, output_label=True, label_map_file=label_map_file,
-        transform_param=train_transform_param, batch_sampler=batch_sampler)
+        transform_param=train_transform_param_depth, batch_sampler=batch_sampler)
 
 # Create train net.
 net = caffe.NetSpec()
@@ -513,7 +554,7 @@ shutil.copy(train_net_file, job_dir)
 net2 = caffe.NetSpec()
 net2.data, net2.label = CreateAnnotatedDataLayer(test_data_depth, batch_size=test_batch_size,
         train=False, output_label=True, label_map_file=label_map_file,
-        transform_param=train_transform_param)
+        transform_param=test_transform_param_depth)
 
 # Create test net.
 net = caffe.NetSpec()
