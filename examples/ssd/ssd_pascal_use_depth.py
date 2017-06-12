@@ -98,13 +98,13 @@ resume_training = True
 remove_old_models = False
 
 # The database file for training data. Created by data/VOC0712/create_data.sh
-train_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_trainval_lmdb"
+train_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_trainval_lmdb"              # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
 # The database file for testing data. Created by data/VOC0712/create_data.sh
-test_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_test_lmdb"
+test_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_test_lmdb"                   # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
 # The database file for training data. Created by data/VOC0712/create_data.sh
-train_data_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_trainval_depth_lmdb"
+train_data_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_trainval_depth_lmdb"  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
 # The database file for testing data. Created by data/VOC0712/create_data.sh
-test_data_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_test_depth_lmdb"
+test_data_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/VOC0712_use_depth/lmdb/VOC0712_use_depth_test_depth_lmdb"       # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
 
 # Specify the batch sampler.
 resize_width = 300
@@ -260,19 +260,6 @@ train_transform_param_depth = {
                         P.Resize.LANCZOS4,
                         ],
                 },
-        'distort_param': {
-                'brightness_prob': 0.5,
-                'brightness_delta': 32,
-                'contrast_prob': 0.5,
-                'contrast_lower': 0.5,
-                'contrast_upper': 1.5,
-                'hue_prob': 0.5,
-                'hue_delta': 18,
-                'saturation_prob': 0.5,
-                'saturation_lower': 0.5,
-                'saturation_upper': 1.5,
-                'random_order_prob': 0.0,
-                },
         'expand_param': {
                 'prob': 0.5,
                 'max_expand_ratio': 4.0,
@@ -328,12 +315,12 @@ snapshot_prefix = "{}/{}".format(snapshot_dir, model_name)
 job_file = "{}/{}.sh".format(job_dir, model_name)
 
 # Stores the test image names and sizes. Created by data/VOC0712_use_tools_2017/create_list.sh
-name_size_file = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/tools/test_name_size.txt"
-name_size_file_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/tools/test_name_size_depth.txt"
+name_size_file = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/tools/test_name_size.txt"                        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
+name_size_file_depth = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/tools/test_name_size_depth.txt"            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
 pretrain_model = ""
 # Stores LabelMapItem.
-label_map_file = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/tools/labelmap_voc.prototxt"
+label_map_file = "/home/bardo91/programing/3rdparty/caffe_ssd/data/VOCdevkit_use_depth/tools/labelmap_voc.prototxt"                     # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
 
 # MultiBoxLoss parameters.
 num_classes = 3+1
@@ -414,8 +401,8 @@ num_gpus = len(gpulist)
 # Divide the mini-batch to different GPUs.
 #batch_size = 32
 #accum_batch_size = 32
-batch_size = 16
-accum_batch_size = 16
+batch_size = 8
+accum_batch_size = 8
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
@@ -436,8 +423,8 @@ elif normalization_mode == P.Loss.FULL:
   base_lr *= 2000.
 
 # Evaluate on whole test set.
-num_test_image =45 
-test_batch_size = 8
+num_test_image =23                              # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY 
+test_batch_size = 4                             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
 # Ideally test_batch_size should be divisible by num_test_image,
 # otherwise mAP will be slightly off the true value.
 test_iter = int(math.ceil(float(num_test_image) / test_batch_size))
