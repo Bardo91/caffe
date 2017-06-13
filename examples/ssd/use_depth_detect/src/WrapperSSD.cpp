@@ -40,11 +40,12 @@ WrapperSSD::WrapperSSD(const string& model_file,
 }
 
 std::vector<vector<float> > WrapperSSD::Detect(const cv::Mat& _rgb, const cv::Mat &_depth) {
-    Blob<float>* input_layer = net_->input_blobs()[0];
+    auto inputBlobs=net_->input_blobs();
+    Blob<float>* input_layer = inputBlobs[0];
     input_layer->Reshape(1, num_channels_, input_geometry_.height, input_geometry_.width);
 
-    Blob<float>* input_layer_depth = net_->input_blobs()[1];
-    input_layer->Reshape(1, num_channels_depth_, input_geometry_depth_.height, input_geometry_depth_.width);
+    Blob<float>* input_layer_depth =inputBlobs[1];
+    input_layer_depth->Reshape(1, num_channels_depth_, input_geometry_depth_.height, input_geometry_depth_.width);
 
     /* Forward dimension change to all layers. */
     net_->Reshape();
@@ -56,8 +57,8 @@ std::vector<vector<float> > WrapperSSD::Detect(const cv::Mat& _rgb, const cv::Ma
 
 
     std::vector<cv::Mat> input_channels_detpth;
-    WrapInputLayer(&input_channels_detpth);
-    Preprocess(_depth, &input_channels_detpth);
+    WrapInputLayerDepth(&input_channels_detpth);
+    PreprocessDepth(_depth, &input_channels_detpth);
     net_->Forward();
 
     /* Copy the output layer to a std::vector */
@@ -181,12 +182,13 @@ void WrapperSSD::Preprocess(const cv::Mat& img, std::vector<cv::Mat>* input_chan
         sample_resized.convertTo(sample_float, CV_32FC1);
 
     cv::Mat sample_normalized;
-    cv::subtract(sample_float, mean_, sample_normalized);
+    //cv::subtract(sample_float, mean_, sample_normalized);
 
     /* This operation will write the separate BGR planes directly to the
    * input layer of the network because it is wrapped by the cv::Mat
    * objects in input_channels. */
-    cv::split(sample_normalized, *input_channels);
+    //cv::split(sample_normalized, *input_channels);
+    cv::split(sample_float, *input_channels);
 
     CHECK(reinterpret_cast<float*>(input_channels->at(0).data)
           == net_->input_blobs()[0]->cpu_data())
@@ -233,12 +235,12 @@ void WrapperSSD::PreprocessDepth(const cv::Mat &img, std::vector<cv::Mat> *input
         sample_resized.convertTo(sample_float, CV_32FC1);
 
     cv::Mat sample_normalized;
-    cv::subtract(sample_float, mean_, sample_normalized);
+   // cv::subtract(sample_float, mean_, sample_normalized);
 
     /* This operation will write the separate BGR planes directly to the
    * input layer of the network because it is wrapped by the cv::Mat
    * objects in input_channels. */
-    cv::split(sample_normalized, *input_channels);
-
+    //cv::split(sample_normalized, *input_channels);
+    cv::split(sample_float, *input_channels);
     CHECK(reinterpret_cast<float*>(input_channels->at(0).data) == net_->input_blobs()[1]->cpu_data()) << "Input channels are not wrapping the input layer of the network.";
 }
