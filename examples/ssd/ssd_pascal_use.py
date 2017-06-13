@@ -79,9 +79,9 @@ resume_training = True
 remove_old_models = False
 
 # The database file for training data. Created by data/VOC0712/create_data.sh
-train_data = "data/VOCdevkit_use_tools_2017/VOC2007/lmdb/VOC0712_use_tools_2017_trainval_lmdb"
+train_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/wsp/data/VOC2017/lmdb/USE_TOOLS_2017_wsp_trainval_lmdb"
 # The database file for testing data. Created by data/VOC0712/create_data.sh
-test_data = "data/VOCdevkit_use_tools_2017/VOC2007/lmdb/VOC0712_use_tools_2017_test_lmdb"
+test_data = "/home/bardo91/programing/3rdparty/caffe_ssd/data/wsp/data/VOC2017/lmdb/USE_TOOLS_2017_wsp_test_lmdb"
 # Specify the batch sampler.
 resize_width = 300
 resize_height = 300
@@ -234,12 +234,12 @@ else:
 # Modify the job name if you want.
 job_name = "SSD_{}".format(resize)
 # The name of the model. Modify it if you want.
-model_name = "VGG_VOC0712_{}_use_tools_2017".format(job_name)
+model_name = "VGG_USE_TOOLS_WSP".format(job_name)
 
 # Directory which stores the model .prototxt file.
-save_dir = "use/models/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
+save_dir = "use/models/VGGNet/VGG_USE_TOOLS_WSP/{}".format(job_name)
 # Directory which stores the snapshot of models.
-snapshot_dir = "use/models/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
+snapshot_dir = "use/models/VGGNet/VGG_USE_TOOLS_WSP/{}".format(job_name)
 # Directory which stores the job script and log file.
 job_dir = "use/jobs/VGGNet/VOC0712_use_tools_2017/{}".format(job_name)
 # Directory which stores the detection results.
@@ -256,16 +256,16 @@ snapshot_prefix = "{}/{}".format(snapshot_dir, model_name)
 job_file = "{}/{}.sh".format(job_dir, model_name)
 
 # Stores the test image names and sizes. Created by data/VOC0712_use_tools_2017/create_list.sh
-name_size_file = "data/VOC0712_use_tools_2017/test_name_size.txt"
+name_size_file = "/home/bardo91/programing/3rdparty/caffe_ssd/data/wsp/tools/test_name_size.txt"
 # The pretrained model. We use the Fully convolutional reduced (atrous) VGGNet.
 pretrain_model = ""
 # Stores LabelMapItem.
-label_map_file = "data/VOC0712_use_tools_2017/labelmap_voc.prototxt"
+label_map_file = "/home/bardo91/programing/3rdparty/caffe_ssd/data/wsp/tools/labelmap_voc.prototxt"
 
 # MultiBoxLoss parameters.
-num_classes = 2+1
+num_classes = 3+1
 share_location = True
-background_label_id=2
+background_label_id=3
 train_on_diff_gt = True
 normalization_mode = P.Loss.VALID
 code_type = P.PriorBox.CENTER_SIZE
@@ -358,7 +358,7 @@ elif normalization_mode == P.Loss.FULL:
   base_lr *= 2000.
 
 # Evaluate on whole test set.
-num_test_image = 18
+num_test_image =45 
 test_batch_size = 8
 # Ideally test_batch_size should be divisible by num_test_image,
 # otherwise mAP will be slightly off the true value.
@@ -366,15 +366,15 @@ test_iter = int(math.ceil(float(num_test_image) / test_batch_size))
 
 solver_param = {
     # Train parameters
-    'base_lr': base_lr,
+    'base_lr': 0.00001,
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
     'stepvalue': [80000, 100000, 120000],
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 30000,			# Reduced for testing purposes original 120000
-    'snapshot': 2000,
+    'max_iter': 60000,			# Reduced for testing purposes original 120000
+    'snapshot': 5000,
     'display': 10,
     'average_loss': 10,
     'type': "SGD",

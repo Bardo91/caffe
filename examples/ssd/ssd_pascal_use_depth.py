@@ -401,8 +401,8 @@ num_gpus = len(gpulist)
 # Divide the mini-batch to different GPUs.
 #batch_size = 32
 #accum_batch_size = 32
-batch_size = 8
-accum_batch_size = 8
+batch_size = 4
+accum_batch_size = 4
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
@@ -431,15 +431,15 @@ test_iter = int(math.ceil(float(num_test_image) / test_batch_size))
 
 solver_param = {
     # Train parameters
-    'base_lr': 0.0001,                          # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
+    'base_lr': 0.00001,                          # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
     'weight_decay': 0.0005,
     'lr_policy': "multistep",
     'stepvalue': [80000, 100000, 120000],
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 60000,			        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
-    'snapshot': 2000,
+    'max_iter': 15000,			        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
+    'snapshot': 2500,
     'display': 10,
     'average_loss': 10,
     'type': "SGD",
