@@ -402,8 +402,8 @@ num_gpus = len(gpulist)
 # Divide the mini-batch to different GPUs.
 #batch_size = 32
 #accum_batch_size = 32
-batch_size = 4
-accum_batch_size = 4
+batch_size = 1
+accum_batch_size = 1
 iter_size = accum_batch_size / batch_size
 solver_mode = P.Solver.CPU
 device_id = 0
@@ -425,7 +425,7 @@ elif normalization_mode == P.Loss.FULL:
 
 # Evaluate on whole test set.
 num_test_image =23                              # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY 
-test_batch_size = 4                             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
+test_batch_size = 1                             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
 # Ideally test_batch_size should be divisible by num_test_image,
 # otherwise mAP will be slightly off the true value.
 test_iter = int(math.ceil(float(num_test_image) / test_batch_size))
@@ -439,8 +439,8 @@ solver_param = {
     'gamma': 0.1,
     'momentum': 0.9,
     'iter_size': iter_size,
-    'max_iter': 15000,			        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
-    'snapshot': 2500,
+    'max_iter': 120000,			        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
+    'snapshot': 2000,
     'display': 10,
     'average_loss': 10,
     'type': "SGD",
@@ -450,7 +450,7 @@ solver_param = {
     'snapshot_after_train': True,
     # Test parameters
     'test_iter': [test_iter],
-    'test_interval': 10000,
+    'test_interval': 120000,                     # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MIGHT WANT TO MODIFY
     'eval_type': "detection",
     'ap_version': "11point",
     'test_initialization': False,
@@ -503,7 +503,7 @@ net2.data, net2.label = CreateAnnotatedDataLayer(train_data_depth, batch_size=ba
         train=True, output_label=True, label_map_file=label_map_file,
         transform_param=train_transform_param_depth, batch_sampler=batch_sampler)
 
-# Create train net.
+# Create train net rgb.
 net = caffe.NetSpec()
 net.data, net.label = CreateAnnotatedDataLayer(train_data, batch_size=batch_size_per_device,
         train=True, output_label=True, label_map_file=label_map_file,
@@ -558,12 +558,6 @@ AddExtraLayers(net, use_batchnorm, lr_mult=lr_mult)
 #custom depth input layer
 net.tops["data2"] = net2.data
 AddExtraDepthLayers(net, use_batchnorm, lr_mult=lr_mult)
-
-mbox_layers = CreateMultiBoxHead(net, data_layer='data', from_layers=mbox_source_layers,
-        use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
-        aspect_ratios=aspect_ratios, steps=steps, normalizations=normalizations,
-        num_classes=num_classes, share_location=share_location, flip=flip, clip=clip,
-        prior_variance=prior_variance, kernel_size=3, pad=1, lr_mult=lr_mult)
 
 mbox_layers = CreateMultiBoxHead(net, data_layer='data', from_layers=mbox_source_layers,
         use_batchnorm=use_batchnorm, min_sizes=min_sizes, max_sizes=max_sizes,
