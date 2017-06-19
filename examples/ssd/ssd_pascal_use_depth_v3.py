@@ -443,7 +443,7 @@ elif normalization_mode == P.Loss.FULL:
 
 # Evaluate on whole test set.
 num_test_image =23                              # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY 
-test_batch_size = 8                             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
+test_batch_size = 4                             # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<----------------------------- MODIFY
 # Ideally test_batch_size should be divisible by num_test_image,
 # otherwise mAP will be slightly off the true value.
 test_iter = int(math.ceil(float(num_test_image) / test_batch_size))
@@ -515,23 +515,23 @@ make_if_not_exist(job_dir)
 make_if_not_exist(snapshot_dir)
 
 ###############################################################################################################################################
-# Create train net depth.
-net2 = caffe.NetSpec()
-net2.data, net2.label = CreateAnnotatedDataLayer(train_data_depth, batch_size=batch_size_per_device,
-        train=True, output_label=True, label_map_file=label_map_file,
-        transform_param=train_transform_param_depth, batch_sampler=batch_sampler)
-
 # Create train net rgb.
 net = caffe.NetSpec()
 net.data, net.label = CreateAnnotatedDataLayer(train_data, batch_size=batch_size_per_device,
         train=True, output_label=True, label_map_file=label_map_file,
         transform_param=train_transform_param, batch_sampler=batch_sampler)
 
+# Create train net depth.
+net_depth = caffe.NetSpec()
+net_depth.data, net_depth.label = CreateAnnotatedDataLayerDepth(train_data_depth, batch_size=batch_size_per_device,
+        train=True, output_label=True, label_map_file=label_map_file,
+        transform_param=train_transform_param_depth, batch_sampler=batch_sampler)
+
 #custom depth input layer
-net.tops["data2"] = net2.data
+net.tops["data_depth"] = net_depth.data
 
 VGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True, dropout=False)
-VGGNetBodyDepth(net, from_layer='data2', fully_conv=True, reduced=True, dilated=True, dropout=False)
+VGGNetBodyDepth(net, from_layer='data_depth', fully_conv=True, reduced=True, dilated=True, dropout=False)
 AddExtraLayers(net, use_batchnorm, lr_mult=lr_mult)
 AddExtraDepthLayers(net, use_batchnorm, lr_mult=lr_mult)
 
@@ -549,29 +549,34 @@ net[name] = L.MultiBoxLoss(*mbox_layers, multibox_loss_param=multibox_loss_param
         loss_param=loss_param, include=dict(phase=caffe_pb2.Phase.Value('TRAIN')),
         propagate_down=[True, True, False, False])
 
+train_net = net.to_proto();
+for i in reversed(range(1,len(train_net.layer))):
+        if(train_net.layer[i].name == "data_depth"):
+                del train_net.layer[i].top[1]             ## DIRTY BUT... how?
+
 with open(train_net_file, 'w') as f:
     print('name: "{}_train"'.format(model_name), file=f)
-    print(net.to_proto(), file=f)
+    print(train_net, file=f)
 shutil.copy(train_net_file, job_dir)
 
 ###############################################################################################################################################
-# Create train net depth.
-net2 = caffe.NetSpec()
-net2.data, net2.label = CreateAnnotatedDataLayer(test_data_depth, batch_size=test_batch_size,
-        train=False, output_label=True, label_map_file=label_map_file,
-        transform_param=test_transform_param_depth)
-
 # Create test net.
 net = caffe.NetSpec()
 net.data, net.label = CreateAnnotatedDataLayer(test_data, batch_size=test_batch_size,
         train=False, output_label=True, label_map_file=label_map_file,
         transform_param=test_transform_param)
 
+# Create train net depth.
+net_depth = caffe.NetSpec()
+net_depth.data, net_depth.label = CreateAnnotatedDataLayerDepth(test_data_depth, batch_size=test_batch_size,
+        train=False, output_label=True, label_map_file=label_map_file,
+        transform_param=test_transform_param_depth)
+
 #custom depth input layer
-net.tops["data2"] = net2.data
+net.tops["data_depth"] = net_depth.data
 
 VGGNetBody(net, from_layer='data', fully_conv=True, reduced=True, dilated=True, dropout=False)
-VGGNetBodyDepth(net, from_layer='data2', fully_conv=True, reduced=True, dilated=True, dropout=False)
+VGGNetBodyDepth(net, from_layer='data_depth', fully_conv=True, reduced=True, dilated=True, dropout=False)
 AddExtraLayers(net, use_batchnorm, lr_mult=lr_mult)
 AddExtraDepthLayers(net, use_batchnorm, lr_mult=lr_mult)
 
@@ -602,9 +607,15 @@ net.detection_eval = L.DetectionEvaluate(net.detection_out, net.label,
     detection_evaluate_param=det_eval_param,
     include=dict(phase=caffe_pb2.Phase.Value('TEST')))
 
+test_net = net.to_proto()
+
+for i in reversed(range(1,len(test_net.layer))):
+        if(test_net.layer[i].name == "data_depth"):
+                del test_net.layer[i].top[1]             ## DIRTY BUT... how?
+
 with open(test_net_file, 'w') as f:
     print('name: "{}_test"'.format(model_name), file=f)
-    print(net.to_proto(), file=f)
+    print(test_net, file=f)
 shutil.copy(test_net_file, job_dir)
 
 ###############################################################################################################################################
@@ -629,7 +640,7 @@ with open(deploy_net_file, 'w') as f:
 
 #     #add depth input layer
 #     net_param.name = '{}_deploy'.format(model_name)
-#     net_param.input.extend(['data2'])
+#     net_param.input.extend(['data_depth'])
 #     net_param.input_shape.extend([caffe_pb2.BlobShape(dim=[1, 1, resize_height, resize_width])])
     print(net_param, file=f)
     
@@ -689,7 +700,7 @@ with open(job_file, 'w') as f:
 py_file = os.path.abspath(__file__)
 shutil.copy(py_file, job_dir)
 
-# # Run the job.
-# os.chmod(job_file, stat.S_IRWXU)
-# if run_soon:
-#   subprocess.call(job_file, shell=True)
+# Run the job.
+os.chmod(job_file, stat.S_IRWXU)
+if run_soon:
+  subprocess.call(job_file, shell=True)

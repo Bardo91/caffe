@@ -215,6 +215,31 @@ def CreateAnnotatedDataLayer(source, batch_size=32, backend=P.Data.LMDB,
         data_param=dict(batch_size=batch_size, backend=backend, source=source),
         ntop=ntop, **kwargs)
 
+def CreateAnnotatedDataLayerDepth(source, batch_size=32, backend=P.Data.LMDB,
+        output_label=True, train=True, label_map_file='', anno_type=None,
+        transform_param={}, batch_sampler=[{}]):
+    if train:
+        kwargs = {
+                'include': dict(phase=caffe_pb2.Phase.Value('TRAIN')),
+                'transform_param': transform_param,
+                }
+    else:
+        kwargs = {
+                'include': dict(phase=caffe_pb2.Phase.Value('TEST')),
+                'transform_param': transform_param,
+                }
+    ntop = 1
+    if output_label:
+        ntop = 2
+    annotated_data_param = {
+        'label_map_file': label_map_file,
+        'batch_sampler': batch_sampler,
+        }
+    if anno_type is not None:
+        annotated_data_param.update({'anno_type': anno_type})
+    return L.AnnotatedData(name="data_depth", annotated_data_param=annotated_data_param,
+        data_param=dict(batch_size=batch_size, backend=backend, source=source),
+        ntop=ntop, **kwargs)
 
 def ZFNetBody(net, from_layer, need_fc=True, fully_conv=False, reduced=False,
         dilated=False, dropout=True, need_fc8=False, freeze_layers=[]):
